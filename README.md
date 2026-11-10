@@ -11,6 +11,7 @@ then generalize it to other countries' tax systems.
 - **Step 3 (done).** A generic, lever-based engine (`taxsim.model`) with reusable tax instruments, brackets at any
   threshold, VAT support, and JSON plans. The US model is re-expressed with it and matches the port exactly.
   See [`docs/architecture.md`](docs/architecture.md).
+- Open questions for the authors: [`docs/questions.md`](docs/questions.md).
 - Next: refreshed US data, then other countries.
 
 ## Layout

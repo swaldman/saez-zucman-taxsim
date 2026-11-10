@@ -116,6 +116,9 @@ dividends, of dividend/corporate integration, and of capital gains *differs from
 
 ## 6. Quirks of the 2020 workbook (reproduced faithfully, worth revisiting)
 
+Open questions about these and other modeling choices, for Saez and Zucman, are collected in
+[`questions.md`](questions.md).
+
 1. **Wealth above $1bn.** Only the top-400 line has data above $1bn. For it, wealth above
    $2.5bn/$5bn/$10bn is imputed as 0.9/0.6/0.45 × wealth above $1bn (calculator!AQ22:AS22). For all
    other groups the excess above $2.5bn is zero, so bracket rates above $2.5bn only affect the
