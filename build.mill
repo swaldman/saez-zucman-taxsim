@@ -10,6 +10,7 @@ object Versions:
   val scalaJS = "1.20.1"
   val upickle = "4.3.2"
   val munit   = "1.1.1"
+  val laminar = "17.2.1"
 
 /** Common settings for modules that cross-build to the JVM and Scala.js.
  *  Sources: `<module>/src` (shared), `<module>/src-jvm`, `<module>/src-js`. */
@@ -49,3 +50,43 @@ object parity extends Module:
   object js extends SharedJS:
     def moduleDeps = Seq(data.js)
     object test extends ScalaJSTests with SharedTests
+
+/** Demo website: Scala.js + Laminar, static files in `webapp/static`.
+ *  `./mill webapp.site` assembles the site (optimized JS) in out/webapp/site.dest;
+ *  `./mill webapp.devSite` does the same with fast (unoptimized) linking;
+ *  `./mill webapp.standalone` writes a single self-contained HTML file. */
+object webapp extends ScalaJSModule:
+  def scalaVersion = Versions.scala
+  def scalaJSVersion = Versions.scalaJS
+  def scalacOptions = Seq("-deprecation", "-feature", "-unchecked", "-Wunused:imports")
+  def moduleDeps = Seq(data.js)
+  def mvnDeps = Seq(mvn"com.raquo::laminar::${Versions.laminar}")
+  def scalaJSUseMainModuleInitializer = true
+
+  def staticFiles = Task.Source(moduleDir / "static")
+
+  private def assemble(static: os.Path, jsDir: os.Path, out: os.Path): Unit =
+    for p <- os.list(static) do os.copy(p, out / p.last, replaceExisting = true)
+    os.copy(jsDir / "main.js", out / "main.js", replaceExisting = true)
+
+  def site = Task {
+    assemble(staticFiles().path, fullLinkJS().dest.path, Task.dest)
+    PathRef(Task.dest)
+  }
+
+  def devSite = Task {
+    assemble(staticFiles().path, fastLinkJS().dest.path, Task.dest)
+    PathRef(Task.dest)
+  }
+
+  /** index.html with the stylesheet and script inlined, for sharing as one file. */
+  def standalone = Task {
+    val dir = site().path
+    val css = os.read(dir / "styles.css")
+    val js = os.read(dir / "main.js").replace("</script", "<\\/script")
+    val html = os.read(dir / "index.html")
+      .replace("""<link rel="stylesheet" href="styles.css">""", s"<style>\n$css\n</style>")
+      .replace("""<script src="main.js"></script>""", s"<script>\n$js\n</script>")
+    os.write(Task.dest / "taxsim-demo.html", html)
+    PathRef(Task.dest / "taxsim-demo.html")
+  }

@@ -5,6 +5,8 @@ Writes:
   fixtures/sz2019/databig.csv            per-g-percentile inputs (sheet `databig`, rows 2..129)
   fixtures/sz2019/growth.csv             1980->2018 growth inputs (sheet `growth`, rows 2..129)
   fixtures/sz2019/presets.json           tax plans from sheet `interface` (columns C, D, G..L)
+  fixtures/sz2019/history.csv            top 0.1% / bottom 90% tax rates by year (sheet `historical-data`)
+  fixtures/sz2019/datahist.csv           tax rates by g-percentile in 1950..2018 (sheet `datahist`)
   fixtures/sz2019/calculatorbig_expected.csv  cached outputs of sheet `calculatorbig` (rows 8..135)
   fixtures/sz2019/calculatorbig_totals.json   cached totals (row 137, Z138, etc.)
 and generated Scala sources embedding the same data (so tests run on JVM and Scala.js):
@@ -84,6 +86,23 @@ def main(wb):
     gr_rows = table(gr, range(2, 130), gr_cols)
     growth_csv = to_csv(gr_header, gr_rows)
 
+    # --- historical series (data, not model output)
+    hd = grid(load(wb, "historical-data"))
+    hist_rows = []
+    for r in range(3, 200):
+        year = val(hd, r, "A")
+        top, b90, b90h = val(hd, r, "B"), val(hd, r, "D"), val(hd, r, "E")
+        if year == "" or top == "" or b90 == "":
+            continue
+        if str(year).startswith("2025"):
+            continue  # row 2025 holds the live "proposed" point, recomputed by the model
+        hist_rows.append([int(float(year)), top, b90, b90h])
+    history_csv = to_csv(["year", "top01", "bottom90", "bottom90health"], hist_rows)
+
+    dh = grid(load(wb, "datahist"))
+    dh_cols = cols_range("A", "Q")
+    datahist_csv = to_csv([val(dh, 1, c) for c in dh_cols], table(dh, range(2, 130), dh_cols))
+
     # --- presets from interface
     it = grid(load(wb, "interface"))
     preset_cols = {"C": "current", "D": "active", "G": "book", "H": "biden",
@@ -146,6 +165,7 @@ def main(wb):
 
     for name, text in [("databig.csv", databig_csv), ("growth.csv", growth_csv),
                        ("presets.json", presets_json),
+                       ("history.csv", history_csv), ("datahist.csv", datahist_csv),
                        ("calculatorbig_expected.csv", expected_csv),
                        ("calculatorbig_totals.json", totals_json)]:
         with open(os.path.join(OUT, name), "w") as f:
@@ -160,7 +180,9 @@ def main(wb):
                 "private[sz2019] object Sz2019Raw:\n"
                 + scala_string_chunks("databigCsv", databig_csv)
                 + scala_string_chunks("growthCsv", growth_csv)
-                + scala_string_chunks("presetsJson", presets_json))
+                + scala_string_chunks("presetsJson", presets_json)
+                + scala_string_chunks("historyCsv", history_csv)
+                + scala_string_chunks("datahistCsv", datahist_csv))
     par_dir = os.path.join(ROOT, "parity", "test", "src", "taxsim", "parity")
     os.makedirs(par_dir, exist_ok=True)
     with open(os.path.join(par_dir, "ExpectedRaw.scala"), "w") as f:

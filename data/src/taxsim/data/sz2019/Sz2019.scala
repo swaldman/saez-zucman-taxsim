@@ -37,3 +37,22 @@ object Sz2019:
     taxsim.data.us.UsModel.build("us-2018-sz2019", "United States 2018 (Saez-Zucman 2020)", 2018,
       groups, params, current, options, presets,
       notes = "Saez & Zucman, taxsimulator2.xlsx (January 2020): 2018 incomes and taxes, 127 g-percentiles + top 400.")
+
+  /** Effective tax rates of the top 0.1% and bottom 90% by year, 1913–2018 (sheet `historical-data`,
+   *  from PSZ/Saez-Zucman DINA series; % of national income + pure capital gains). */
+  final case class HistoryPoint(year: Int, top01: Double, bottom90: Double, bottom90WithHealth: Double)
+
+  lazy val history: IndexedSeq[HistoryPoint] =
+    val c = Csv.parse(Sz2019Raw.historyCsv)
+    val (y, t, b, bh) = (c.doubles("year"), c.doubles("top01"), c.doubles("bottom90"), c.doubles("bottom90health"))
+    y.indices.map(i => HistoryPoint(y(i).toInt, t(i), b(i), bh(i)))
+
+  /** Total effective tax rate by g-percentile (aligned with `groups`) in 1950, 1960, …, 2010, 2018
+   *  (sheet `datahist`). `withHealth` includes private health insurance as a tax. */
+  def historicalRates(year: Int, withHealth: Boolean): IndexedSeq[Double] =
+    Csv.parse(Sz2019Raw.datahistCsv).doubles((if withHealth then "taxhealth" else "tax") + year)
+
+  val historicalYears: IndexedSeq[Int] = IndexedSeq(1950, 1960, 1970, 1980, 1990, 2000, 2010, 2018)
+
+  /** Proportional after-tax income shortfall versus equitable growth since 1980, by group (sheet `growth`, column M). */
+  lazy val missingPosttaxRaise: IndexedSeq[Double] = Csv.parse(Sz2019Raw.growthCsv).doubles("missingPosttaxRaise")

@@ -11,6 +11,7 @@ then generalize it to other countries' tax systems.
 - **Step 3 (done).** A generic, lever-based engine (`taxsim.model`) with reusable tax instruments, brackets at any
   threshold, VAT support, and JSON plans. The US model is re-expressed with it and matches the port exactly.
   See [`docs/architecture.md`](docs/architecture.md).
+- **Demo website.** `webapp/`, see Build below.
 - Open questions for the authors: [`docs/questions.md`](docs/questions.md).
 - Next: refreshed US data, then other countries.
 
@@ -21,6 +22,7 @@ then generalize it to other countries' tax systems.
 | `core/` | Pure engine, with no dependencies. `taxsim.model`: the generic engine (`Model`, `Engine`, `Instruments`, `ExcessCurve`, `Behavioral`). `taxsim.sz`: the faithful workbook port (`SzModel`, `SzBehavioral`), kept as a reference. |
 | `data/` | Codecs (CSV, policy JSON) and embedded datasets. `taxsim.data.sz2019.Sz2019` holds the 2018 US data and the 2020 plans, both as raw groups and as a generic `model`. |
 | `parity/` | Tests that reproduce `reference/taxsimulator2.xlsx`. |
+| `webapp/` | Demo website (Scala.js + Laminar, dependency-free SVG charts). Two pages: the 2020 plans (the workbook's charts, recomputed live) and a simulator with levers generated from the model's `LeverSchema`. |
 | `fixtures/sz2019/` | Canonical CSV/JSON extracted from the workbook. |
 | `tools/` | Python (stdlib only) workbook extractors: `xlsx_cells.py` dumps a sheet's formulas and values; `extract_fixtures.py` regenerates the fixtures and the embedded Scala sources. |
 | `reference/` | The original workbook and PDFs by Saez & Zucman. |
@@ -34,7 +36,16 @@ Requires a JDK (17+) and Node.js for the Scala.js tests. Mill is bootstrapped by
 ./mill '__.test'                  # all tests, JVM + JS
 ./mill 'parity.{jvm,js}.test'     # workbook parity only
 python3 -I tools/extract_fixtures.py reference/taxsimulator2.xlsx   # regenerate fixtures
+
+./mill webapp.devSite             # demo site, fast build → out/webapp/devSite.dest/
+./mill webapp.site                # demo site, optimized → out/webapp/site.dest/
+./mill webapp.standalone          # one self-contained HTML file → out/webapp/standalone.dest/taxsim-demo.html
+python3 -m http.server 8765 --directory out/webapp/devSite.dest       # then open http://127.0.0.1:8765
 ```
+
+The site is static: deploy the contents of `site.dest` anywhere. The URL carries the plan
+(`#/simulator?plan={...}`, the levers that differ from current law, in compact JSON), so any
+scenario can be shared as a link.
 
 ## Example
 
