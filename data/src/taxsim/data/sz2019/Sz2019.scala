@@ -31,3 +31,9 @@ object Sz2019:
   lazy val presets: Map[String, SzPolicy] = presetFile.presets
 
   def current: SzPolicy = presets("current")
+
+  /** The same data and plans as a generic [[taxsim.model.Model]] (lever-based, arbitrary brackets). */
+  lazy val model: taxsim.model.Model =
+    taxsim.data.us.UsModel.build("us-2018-sz2019", "United States 2018 (Saez-Zucman 2020)", 2018,
+      groups, params, current, options, presets,
+      notes = "Saez & Zucman, taxsimulator2.xlsx (January 2020): 2018 incomes and taxes, 127 g-percentiles + top 400.")

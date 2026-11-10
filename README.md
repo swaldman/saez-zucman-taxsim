@@ -5,16 +5,20 @@ A reusable implementation of the Saez–Zucman tax simulator
 Scala.js, so the same engine can run in a browser. The goal is to update it with recent US data and
 then generalize it to other countries' tax systems.
 
-**Status.** The 2020 model has been ported, and tests check it against the original workbook on the JVM
-and on Scala.js. See [`docs/methodology.md`](docs/methodology.md) for the full model specification,
-with references to the original spreadsheet cells.
+**Status.**
+- **Step 1–2 (done).** The 2020 model has been ported, and tests check it against the original workbook on the
+  JVM and on Scala.js. See [`docs/methodology.md`](docs/methodology.md).
+- **Step 3 (done).** A generic, lever-based engine (`taxsim.model`) with reusable tax instruments, brackets at any
+  threshold, VAT support, and JSON plans. The US model is re-expressed with it and matches the port exactly.
+  See [`docs/architecture.md`](docs/architecture.md).
+- Next: refreshed US data, then other countries.
 
 ## Layout
 
 | Path | Contents |
 |---|---|
-| `core/` | Pure engine, with no dependencies. `taxsim.sz.SzModel` (static incidence) and `SzBehavioral` (long-run responses). |
-| `data/` | Codecs (CSV, JSON via upickle) and embedded datasets. `taxsim.data.sz2019.Sz2019` holds the 2018 US data and the 2020 plans. |
+| `core/` | Pure engine, with no dependencies. `taxsim.model`: the generic engine (`Model`, `Engine`, `Instruments`, `ExcessCurve`, `Behavioral`). `taxsim.sz`: the faithful workbook port (`SzModel`, `SzBehavioral`), kept as a reference. |
+| `data/` | Codecs (CSV, policy JSON) and embedded datasets. `taxsim.data.sz2019.Sz2019` holds the 2018 US data and the 2020 plans, both as raw groups and as a generic `model`. |
 | `parity/` | Tests that reproduce `reference/taxsimulator2.xlsx`. |
 | `fixtures/sz2019/` | Canonical CSV/JSON extracted from the workbook. |
 | `tools/` | Python (stdlib only) workbook extractors: `xlsx_cells.py` dumps a sheet's formulas and values; `extract_fixtures.py` regenerates the fixtures and the embedded Scala sources. |
@@ -34,14 +38,22 @@ python3 -I tools/extract_fixtures.py reference/taxsimulator2.xlsx   # regenerate
 ## Example
 
 ```scala
-import taxsim.sz.*
+import taxsim.model.*
+import taxsim.data.PolicyJson
 import taxsim.data.sz2019.Sz2019
+import taxsim.data.us.UsModel.L
 
-val plan = Sz2019.presets("warren").copy(vatRate = 0.05)
-val r = SzModel.run(Sz2019.groups, Sz2019.current, plan, Sz2019.options)
-r.revenueShareOfIncome            // net revenue, share of national income
-r.groups.map(g => g.group.label -> g.proposedRate)
-SzBehavioral.run(r, Sz2019.growth, Sz2019.options)   // optional long-run responses
+val us = Sz2019.model
+// Warren's plan, plus a 5% VAT and a 60% income-tax rate above $3m (not a data threshold)
+val warren = us.presets("warren")
+val plan = warren
+  .set(L.vatRate, 0.05)
+  .set(L.pitSchedule, warren.schedule(L.pitSchedule).withMinimumRateAbove(3e6, 0.6))
+val out = Engine.run(us, plan)
+out.revenueShareOfIncome                       // net revenue, share of national income
+out.annualRevenue                              // $bn per year
+out.groups.map(g => g.group.label -> g.proposedTotal)
+PolicyJson.write(plan)                         // shareable JSON
 ```
 
 ## Credits

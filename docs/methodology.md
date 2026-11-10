@@ -152,3 +152,7 @@ dividends, of dividend/corporate integration, and of capital gains *differs from
   | Sanders | 2.90 | 2.9 |
   | Warren | 3.24 | 3.2 |
   | Obama | 1.56 | 1.6 |
+- The generic engine (`taxsim.model`, see `docs/architecture.md`) re-expresses this model with
+  reusable instruments. It reproduces `SzModel` for every preset, tax and group (≤ 1e-12). It
+  differs in one respect: current totals are the sum of components rather than the stored `effrate`
+  (|Δ| ≤ 1e-8, float32 rounding), so that a zero reform raises exactly zero revenue.
