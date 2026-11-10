@@ -1,0 +1,9 @@
+out/
+.bsp/
+.idea/
+.metals/
+.bloop/
+.vscode/
+*.class
+.DS_Store
+__pycache__/

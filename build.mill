@@ -1,0 +1,51 @@
+//| mill-version: 1.3.1
+package build
+
+import mill.*
+import mill.scalalib.*
+import mill.scalajslib.*
+
+object Versions:
+  val scala   = "3.3.7"
+  val scalaJS = "1.20.1"
+  val upickle = "4.3.2"
+  val munit   = "1.1.1"
+
+/** Common settings for modules that cross-build to the JVM and Scala.js.
+ *  Sources: `<module>/src` (shared), `<module>/src-jvm`, `<module>/src-js`. */
+trait Shared extends ScalaModule with PlatformScalaModule:
+  def scalaVersion = Versions.scala
+  def scalacOptions = Seq("-deprecation", "-feature", "-unchecked", "-Wunused:imports")
+
+trait SharedJS extends Shared with ScalaJSModule:
+  def scalaJSVersion = Versions.scalaJS
+
+trait SharedTests extends TestModule.Munit:
+  def mvnDeps = Seq(mvn"org.scalameta::munit::${Versions.munit}")
+
+/** The pure simulation engine. No IO, no reflection: JS-safe. */
+object core extends Module:
+  object jvm extends Shared:
+    object test extends ScalaTests with SharedTests
+  object js extends SharedJS:
+    object test extends ScalaJSTests with SharedTests
+
+/** Datasets (embedded) and JSON/CSV codecs. */
+object data extends Module:
+  trait DataShared extends Shared:
+    def mvnDeps = Seq(mvn"com.lihaoyi::upickle::${Versions.upickle}")
+  object jvm extends DataShared:
+    def moduleDeps = Seq(core.jvm)
+    object test extends ScalaTests with SharedTests
+  object js extends DataShared with SharedJS:
+    def moduleDeps = Seq(core.js)
+    object test extends ScalaJSTests with SharedTests
+
+/** Tests that reproduce the cached results of reference/taxsimulator2.xlsx. */
+object parity extends Module:
+  object jvm extends Shared:
+    def moduleDeps = Seq(data.jvm)
+    object test extends ScalaTests with SharedTests
+  object js extends SharedJS:
+    def moduleDeps = Seq(data.js)
+    object test extends ScalaJSTests with SharedTests
