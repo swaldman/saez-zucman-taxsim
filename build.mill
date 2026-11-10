@@ -79,6 +79,16 @@ object webapp extends ScalaJSModule:
     PathRef(Task.dest)
   }
 
+  /** End-to-end browser test of the optimized site and the standalone file: sliders, bracket editor,
+   *  presets, shareable links, tooltips, console errors. Needs Node 22+ and Chrome (CHROME=/path overrides).
+   *  `./mill webapp.browserTest` or `./mill webapp.browserTest --screenshots /some/dir`. */
+  def browserTest(args: String*) = Task.Command {
+    val script = moduleDir / "e2e" / "browser-test.mjs"
+    val r = os.proc("node", script, site().path, standalone().path, args)
+      .call(stdout = os.Inherit, stderr = os.Inherit, check = false)
+    if r.exitCode != 0 then throw new Exception(s"browser tests failed (exit ${r.exitCode})")
+  }
+
   /** index.html with the stylesheet and script inlined, for sharing as one file. */
   def standalone = Task {
     val dir = site().path

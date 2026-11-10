@@ -40,8 +40,14 @@ python3 -I tools/extract_fixtures.py reference/taxsimulator2.xlsx   # regenerate
 ./mill webapp.devSite             # demo site, fast build → out/webapp/devSite.dest/
 ./mill webapp.site                # demo site, optimized → out/webapp/site.dest/
 ./mill webapp.standalone          # one self-contained HTML file → out/webapp/standalone.dest/taxsim-demo.html
+./mill webapp.browserTest         # end-to-end browser test of both builds (Node 22+ and Chrome; CHROME=/path overrides)
 python3 -m http.server 8765 --directory out/webapp/devSite.dest       # then open http://127.0.0.1:8765
 ```
+
+`webapp.browserTest` serves the optimized site on a free local port and drives headless Chrome
+(`webapp/e2e/browser-test.mjs`). It checks sliders, the bracket editor, presets, shareable links,
+tooltips, the published revenue figures, the standalone file opened from disk, and that there are
+no console errors. Add `--screenshots <dir>` to save screenshots.
 
 The site is static: deploy the contents of `site.dest` anywhere. The URL carries the plan
 (`#/simulator?plan={...}`, the levers that differ from current law, in compact JSON), so any
