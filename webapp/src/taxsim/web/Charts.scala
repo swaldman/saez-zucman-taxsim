@@ -7,8 +7,9 @@ import org.scalajs.dom
  *  NaN marks a gap. */
 final case class Series(label: String, cls: String, values: IndexedSeq[Double], emph: Boolean = false)
 
-/** A single highlighted point, e.g. a proposed plan placed on a historical chart. */
-final case class Marker(x: Double, y: Double, cls: String, label: String)
+/** A single highlighted point, e.g. a proposed plan placed on a historical chart. If `from` is set,
+ *  a dotted connector in the marker's color is drawn from that (x, y) point to the marker. */
+final case class Marker(x: Double, y: Double, cls: String, label: String, from: Option[(Double, Double)] = None)
 
 /** Small, dependency-free SVG charts: line and stacked-area, with crosshair tooltip,
  *  keyboard navigation (←/→), legend and data table. */
@@ -128,13 +129,17 @@ object Charts:
               prev = y
               Seq(svg.text(svg.cls := "endlabel", svg.x := (ly.px(xs(last)) + 8).toString, svg.y := (y + 4).toString, s.label))
           }
+      val connectors = ly.mk.flatMap(m => m.from.map { (fx, fy) =>
+        svg.line(svg.cls := s"connector ${m.cls}", svg.x1 := ly.px(fx).toString, svg.y1 := ly.py(fy).toString,
+          svg.x2 := ly.px(m.x).toString, svg.y2 := ly.py(m.y).toString)
+      })
       val mks = ly.mk.flatMap { m =>
         Seq(
           svg.circle(svg.cls := s"dot ${m.cls}", svg.cx := ly.px(m.x).toString, svg.cy := ly.py(m.y).toString, svg.r := "5"),
           svg.text(svg.cls := "endlabel", svg.x := (ly.px(m.x) + 9).toString, svg.y := (ly.py(m.y) + 4).toString, m.label)
         )
       }
-      grid ++ xt ++ marks ++ ends ++ mks
+      grid ++ xt ++ marks ++ ends ++ connectors ++ mks
 
     def nearest(ly: Layout, vx: Double): Int =
       var best = 0

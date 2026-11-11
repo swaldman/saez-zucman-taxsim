@@ -141,10 +141,14 @@ object FiguresPage:
       )
     }
     val markerYear = 2025.0
-    val markers = chosen.map { (k, o) =>
+    // Each plan dot is joined by a dotted line to the series' latest historical value.
+    val markers = chosen.combineWith(series).map { (_, o, ss) =>
+      def latest(s: Series) = s.values.lastIndexWhere(!_.isNaN) match
+        case -1 => None
+        case i  => Some((years(i), s.values(i)))
       Seq(
-        Marker(markerYear, App.groupRate(o, true, App.top01), "series-2", s"Top 0.1%"),
-        Marker(markerYear, App.groupRate(o, true, App.bottom90), "series-1", s"Bottom 90%")
+        Marker(markerYear, App.groupRate(o, true, App.top01), "series-2", "Top 0.1%", latest(ss(0))),
+        Marker(markerYear, App.groupRate(o, true, App.bottom90), "series-1", "Bottom 90%", latest(ss(1)))
       )
     }
     val xs = years :+ markerYear
