@@ -189,11 +189,12 @@ object FiguresPage:
       Series("Proposed", "series-2", r.groups.map(_.proposedMtr))))
     // Legend convention: the current situation first, the proposed change second (in orange).
     val pretax = b.map((_, r) => Seq(
-      Series("Shortfall vs equitable growth since 1980", "muted-series", r.groups.map(_.missingIncomeRaise)),
-      Series("Long-run change with the plan", "series-2", r.groups.map(_.pretaxIncomeGain))))
+      Series("Raise needed to match average income growth since 1980", "muted-series", r.groups.map(_.missingIncomeRaise)),
+      Series("Long-run change from behavioral responses (mostly the bargaining assumption)", "series-2", r.groups.map(_.pretaxIncomeGain))))
     val aftertax = b.map((_, r) => Seq(
-      Series("Shortfall vs equitable growth since 1980", "muted-series", Sz2019.missingPosttaxRaise),
-      Series("Change with the plan (static)", "series-2", r.groups.map(_.aftertaxIncomeGainStatic))))
+      Series("Raise needed to match average after-tax income growth since 1980", "muted-series", Sz2019.missingPosttaxRaise),
+      Series("Long-run change with the plan (tax changes and behavioral responses)", "series-2", r.groups.map(_.aftertaxIncomeGainDynamic)),
+      Series("Change from tax changes alone (static)", "series-2 dashed", r.groups.map(_.aftertaxIncomeGainStatic))))
     def card(t: String, sub: Signal[HtmlElement], s: Signal[Seq[Series]], yr: Option[(Double, Double)] = None) =
       div(cls := "card",
         div(cls := "card-head", div(cls := "titles", h2(t), p(child <-- sub))),
@@ -206,12 +207,21 @@ object FiguresPage:
         p(cls := "secondary small",
           "Saez and Zucman's optional behavioral block: marginal tax rates implied by the rate schedule across groups, a real (output) response ",
           "with elasticity 0.25, and a “bargaining” response at the top (elasticity 0.5, phased in from P90 to P99) whose income is redistributed ",
-          "to groups in proportion to how far their income has fallen behind equitable growth since 1980.")),
+          "to groups in proportion to how far their income has fallen behind equitable growth since 1980."),
+        p(cls := "secondary small",
+          "“Equitable growth” means every income group's income growing at the same rate as average income between 1980 and 2018 ",
+          "(average pre-tax income per adult grew about 4.8-fold in nominal terms). The grey lines show the raise each group would need ",
+          "today to be on that path: above 100% means its income would have to more than double; below zero means the group has ",
+          "grown faster than average. Groups are percentile positions, not the same people in both years."),
+        p(cls := "secondary small",
+          "The model counts taxes only: apart from replacing private health premiums, it does not include how the new revenue is spent. ",
+          "The pre-tax gains of lower groups come mostly from the bargaining assumption: income the top no longer bargains for is assumed ",
+          "to go to groups below the equitable path, in proportion to their dollar shortfall, so every such group closes the same fraction of its gap.")),
       div(cls := "grid-2", styleAttr := "margin-top:16px",
         card("Implied marginal tax rates", b.map((k, _) => planSub("Smoothed, current law vs ", k, "")), mtr),
         card("Pre-tax income", b.map((k, _) => planSub("Long-run % change under ", k, "")), pretax)
       ),
       div(styleAttr := "margin-top:16px",
-        card("After-tax income", b.map((k, _) => planSub("% change under ", k, ", before behavioral responses")), aftertax)
+        card("After-tax income", b.map((k, _) => planSub("% change under ", k, "")), aftertax)
       )
     )

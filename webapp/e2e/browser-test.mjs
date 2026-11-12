@@ -218,6 +218,11 @@ try {
     const sub = await evalJs(`[...document.querySelectorAll('.plan-name')].map(e => e.textContent)`);
     check("figures: the plan selector updates every detail chart", sub.length >= 5 && sub.every((t) => t === "Sanders"), sub);
     await shot("figures");
+    if (shotsDir) {
+      await evalJs(`[...document.querySelectorAll('h2')].find((h) => h.textContent.startsWith('Long-run effects')).scrollIntoView()`);
+      await settle();
+      await shot("figures-longrun");
+    }
   });
 
   // ---- Standalone single-file build
