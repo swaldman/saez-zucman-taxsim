@@ -219,6 +219,15 @@ try {
     check("figures: the plan selector updates every detail chart", sub.length >= 5 && sub.every((t) => t === "Sanders"), sub);
     await shot("figures");
     if (shotsDir) {
+      await evalJs(`document.documentElement.dataset.theme = 'dark'`);
+      await settle();
+      await shot("figures-dark");
+      await evalJs(`document.getElementById('plan-select').scrollIntoView({ block: 'center' })`);
+      await settle();
+      await shot("figures-plan-select-dark");
+      await evalJs(`delete document.documentElement.dataset.theme`);
+      await settle();
+      await shot("figures-plan-select");
       await evalJs(`[...document.querySelectorAll('h2')].find((h) => h.textContent.startsWith('Long-run effects')).scrollIntoView()`);
       await settle();
       await shot("figures-longrun");

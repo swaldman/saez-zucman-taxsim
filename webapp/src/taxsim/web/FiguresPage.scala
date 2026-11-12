@@ -31,10 +31,10 @@ object FiguresPage:
           "Income groups are percentiles, with finer groups within the top 1%.")
       ),
       // This option scopes every chart on the page.
-      div(cls := "card", styleAttr := "padding: 10px 16px",
+      div(cls := "card control-card",
         label(cls := "toggle",
           input(typ := "checkbox", controlled(checked <-- health.signal, onClick.mapToChecked --> health.writer)),
-          span("Count employer-paid private health insurance as a tax",
+          span(span(cls := "control-label", "Count employer-paid private health insurance as a tax"),
             span(cls := "muted small", " (about 7% of national income; roughly a fixed amount per covered worker, so it weighs most on middle incomes)")))
       ),
 
@@ -90,9 +90,9 @@ object FiguresPage:
       ),
 
       // The charts below show one plan at a time; this selector scopes them.
-      div(cls := "card", styleAttr := "padding: 10px 16px",
+      div(cls := "card control-card",
         div(cls := "share-row", styleAttr := "flex-wrap: wrap; gap: 10px",
-          label(forId := "plan-select", cls := "secondary", "Plan shown in the charts below:"),
+          label(forId := "plan-select", cls := "control-label", "Plan shown in the charts below:"),
           select(idAttr := "plan-select",
             controlled(value <-- selected.signal, onChange.mapToValue --> selected.writer),
             App.allPlans.filterNot(_.key == "current").map(p => option(value := p.key, p.label))
