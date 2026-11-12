@@ -28,6 +28,8 @@ object Charts:
 
   private final case class Hover(i: Int, left: Double, top: Double)
 
+  private var clipCounter = 0
+
   def lineChart(
       xs: IndexedSeq[Double],
       series: Signal[Seq[Series]],
@@ -38,6 +40,7 @@ object Charts:
       tipFormat: Double => String = Format.pct(_, 1),
       yRange: Option[(Double, Double)] = None,
       yRangeSig: Signal[Option[(Double, Double)]] = Val(None),
+      yClip: Option[(Double, Double)] = None,
       markers: Signal[Seq[Marker]] = Val(Nil),
       stacked: Boolean = false,
       height: Double = 330,
@@ -47,6 +50,8 @@ object Charts:
     val width = Var(760.0) // the chart is drawn at its real pixel width, so text stays at its CSS size
     val xmin = xs.min
     val xmax = xs.max
+    clipCounter += 1
+    val clipId = s"plot-clip-$clipCounter"
 
     final case class Layout(ss: Seq[Series], mk: Seq[Marker], y0: Double, y1: Double, yTicks: IndexedSeq[Double], endLabels: Boolean, w: Double):
       val l = 46.0
@@ -64,7 +69,9 @@ object Charts:
           val tot = ss.foldLeft(IndexedSeq.fill(xs.length)(0.0))((acc, s) => acc.lazyZip(s.values).map(_ + _))
           tot :+ 0.0
         else ss.flatMap(_.values).filterNot(_.isNaN) ++ mk.map(_.y) :+ 0.0
-      val (lo, hi) = yrs.orElse(yRange).getOrElse((math.min(0.0, values.min), values.max))
+      val (lo0, hi0) = yrs.orElse(yRange).getOrElse((math.min(0.0, values.min), values.max))
+      // An optional cap: the axis never extends beyond yClip; lines beyond it are clipped (values stay in tooltips and tables).
+      val (lo, hi) = yClip.fold((lo0, hi0))((cl, ch) => (math.max(lo0, cl), math.min(hi0, ch)))
       val (a, b, ticks) = niceTicks(lo, hi)
       val labelsFit = ss.size <= 4 && ss.forall(_.label.length <= 16) && w >= 480
       Layout(ss, mk, a, b, ticks, endLabels = !stacked && labelsFit, w)
@@ -121,7 +128,7 @@ object Charts:
         if !ly.endLabels then Nil
         else
           val last = xs.length - 1
-          val placed = ly.ss.filterNot(_.values(last).isNaN).map(s => (s, ly.py(s.values(last)))).sortBy(_._2)
+          val placed = ly.ss.filter(s => !s.values(last).isNaN && s.values(last) >= ly.y0 && s.values(last) <= ly.y1).map(s => (s, ly.py(s.values(last)))).sortBy(_._2)
           var prev = Double.NegativeInfinity
           placed.flatMap { (s, y) =>
             if y - prev < 13 then Nil // would collide: legend and tooltip carry it
@@ -139,7 +146,11 @@ object Charts:
           svg.text(svg.cls := "endlabel", svg.x := (ly.px(m.x) + 9).toString, svg.y := (ly.py(m.y) + 4).toString, m.label)
         )
       }
-      grid ++ xt ++ marks ++ ends ++ connectors ++ mks
+      val clip = svg.defs(svg.clipPathTag(svg.idAttr := clipId,
+        svg.rect(svg.x := ly.l.toString, svg.y := (ly.t - 3).toString, svg.width := (ly.w - ly.l - ly.r).toString,
+          svg.height := (height - ly.t - ly.b + 6).toString)))
+      val clippedMarks = svg.g(svg.clipPathAttr := s"url(#$clipId)", marks)
+      Seq(clip) ++ grid ++ xt ++ Seq(clippedMarks) ++ ends ++ connectors ++ mks
 
     def nearest(ly: Layout, vx: Double): Int =
       var best = 0
@@ -203,7 +214,7 @@ object Charts:
                 if stacked then
                   val cum = ly.cumulative
                   ly.ss.indices.map(k => svg.circle(svg.cls := s"dot ${ly.ss(k).cls}", svg.cx := x.toString, svg.cy := ly.py(cum(k)(hv.i)).toString, svg.r := "3.5"))
-                else ly.ss.filterNot(_.values(hv.i).isNaN).map(s =>
+                else ly.ss.filter(s => !s.values(hv.i).isNaN && s.values(hv.i) >= ly.y0 && s.values(hv.i) <= ly.y1).map(s =>
                   svg.circle(svg.cls := s"dot ${s.cls}", svg.cx := x.toString, svg.cy := ly.py(s.values(hv.i)).toString, svg.r := "4"))
               svg.g(svg.line(svg.cls := "crosshair", svg.x1 := x.toString, svg.x2 := x.toString, svg.y1 := ly.t.toString, svg.y2 := (height - ly.b).toString), dots)
             case None => svg.g()

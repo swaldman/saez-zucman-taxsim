@@ -187,20 +187,58 @@ object FiguresPage:
     val mtr = b.map((_, r) => Seq(
       Series("Current law", "series-1", r.groups.map(_.currentMtr)),
       Series("Proposed", "series-2", r.groups.map(_.proposedMtr))))
-    // Legend convention: the current situation first, the proposed change second (in orange).
-    val pretax = b.map((_, r) => Seq(
-      Series("Raise needed to match average income growth since 1980", "muted-series", r.groups.map(_.missingIncomeRaise)),
-      Series("Long-run change from behavioral responses (mostly the bargaining assumption)", "series-2", r.groups.map(_.pretaxIncomeGain))))
-    val aftertax = b.map((_, r) => Seq(
-      Series("Raise needed to match average after-tax income growth since 1980", "muted-series", Sz2019.missingPosttaxRaise),
-      Series("Long-run change with the plan (tax changes and behavioral responses)", "series-2", r.groups.map(_.aftertaxIncomeGainDynamic)),
-      Series("Change from tax changes alone (static)", "series-2 dashed", r.groups.map(_.aftertaxIncomeGainStatic))))
-    def card(t: String, sub: Signal[HtmlElement], s: Signal[Seq[Series]], yr: Option[(Double, Double)] = None) =
+
+    /** Income changes under the plan, relative to current income (unrounded). */
+    final case class Changes(pretax: IndexedSeq[Double], aftertaxLongRun: IndexedSeq[Double], aftertaxStatic: IndexedSeq[Double])
+    val changes = chosen.combineWith(b).map { (_, o, _, r) =>
+      val y = o.groups.map(_.group.income)
+      val e = o.groups.map(_.baselineTotal)
+      val z = o.groups.map(_.proposedTotal)
+      val di = r.groups.map(_.dynamicIncome)
+      Changes(
+        pretax = y.indices.map(i => di(i) / y(i) - 1),
+        aftertaxLongRun = y.indices.map(i => di(i) * (1 - z(i)) / (y(i) * (1 - e(i))) - 1),
+        aftertaxStatic = y.indices.map(i => (1 - z(i)) / (1 - e(i)) - 1))
+    }
+    /** The raise still needed to reach the equitable path, relative to income under the plan. */
+    def stillNeeded(needed: IndexedSeq[Double], change: IndexedSeq[Double]) =
+      needed.indices.map(i => (1 + needed(i)) / (1 + change(i)) - 1)
+
+    val neededPre = b.map((_, r) => r.groups.map(_.missingIncomeRaise))
+    val neededPost = Sz2019.missingPosttaxRaise
+    val pretaxGrey = "Raise needed to match average income growth since 1980"
+    val aftertaxGrey = "Raise needed to match average after-tax income growth since 1980"
+    // Legend convention: the current situation first, the plan second (in orange).
+    val pretax = neededPre.combineWith(changes).map((n, c) => Seq(
+      Series(pretaxGrey, "muted-series", n),
+      Series("Raise still needed with the plan (long-run, including behavioral responses)", "series-2", stillNeeded(n, c.pretax))))
+    val pretaxTable = pretax.combineWith(changes).map((ss, c) =>
+      ss :+ Series("Plan's change in pre-tax income", "", c.pretax))
+    val aftertax = changes.map(c => Seq(
+      Series(aftertaxGrey, "muted-series", neededPost),
+      Series("Raise still needed with the plan (long-run, including behavioral responses)", "series-2", stillNeeded(neededPost, c.aftertaxLongRun)),
+      Series("Raise still needed with tax changes alone (static)", "series-2 dashed", stillNeeded(neededPost, c.aftertaxStatic))))
+    val aftertaxTable = aftertax.combineWith(changes).map((ss, c) => ss ++ Seq(
+      Series("Plan's change in after-tax income (long-run)", "", c.aftertaxLongRun),
+      Series("Plan's change in after-tax income (static)", "", c.aftertaxStatic)))
+
+    // Where a plan cuts a group's income to a small fraction, the raise still needed explodes; the axis is capped.
+    val cap = (-1.0, 3.0)
+    def card(t: String, sub: Signal[HtmlElement], s: Signal[Seq[Series]], table: Option[Signal[Seq[Series]]] = None,
+        capped: Boolean = false) =
       div(cls := "card",
         div(cls := "card-head", div(cls := "titles", h2(t), p(child <-- sub))),
         Charts.legend(s),
-        Charts.lineChart(App.xs, s, App.ticks, App.labels, App.groupSub, yRange = yr, height = 280, ariaLabel = t),
-        Charts.dataTable(App.labels, s))
+        Charts.lineChart(App.xs, s, App.ticks, App.labels, App.groupSub, height = 280, ariaLabel = t,
+          yClip = if capped then Some(cap) else None),
+        Charts.dataTable(App.labels, table.getOrElse(s)),
+        if !capped then emptyNode
+        else child.maybe <-- s.map { ss =>
+          val beyond = ss.flatMap(_.values).filterNot(_.isNaN).filter(v => v > cap._2 || v < cap._1)
+          Option.when(beyond.nonEmpty)(p(cls := "note",
+            s"Some values are off the chart (up to ${Format.pct(beyond.max, 0)}): the plan cuts those groups' income so far below the ",
+            "equitable path that the raise needed to get back to it is very large. Hover over the chart or open the data table to see them."))
+        })
     div(
       div(cls := "card", styleAttr := "margin-top:16px",
         h2("Long-run effects (experimental)"),
@@ -212,16 +250,21 @@ object FiguresPage:
           "“Equitable growth” means every income group's income growing at the same rate as average income between 1980 and 2018 ",
           "(average pre-tax income per adult grew about 4.8-fold in nominal terms). The grey lines show the raise each group would need ",
           "today to be on that path: above 100% means its income would have to more than double; below zero means the group has ",
-          "grown faster than average. Groups are percentile positions, not the same people in both years."),
+          "grown faster than average. The orange lines show the raise each group would still need after the plan, relative to its ",
+          "income under the plan; the closer to zero, the closer the plan brings the group to the equitable path. The path itself is ",
+          "held at its 2018 level. Groups are percentile positions, not the same people in both years. The data tables also give ",
+          "each plan's own percentage change in income."),
         p(cls := "secondary small",
-          "The model counts taxes only: apart from replacing private health premiums, it does not include how the new revenue is spent. ",
+          "The model counts taxes only: apart from replacing private health premiums, it does not include how the new revenue is spent."),
+        p(cls := "secondary small",
           "The pre-tax gains of lower groups come mostly from the bargaining assumption: income the top no longer bargains for is assumed ",
-          "to go to groups below the equitable path, in proportion to their dollar shortfall, so every such group closes the same fraction of its gap.")),
+          "to go to groups below the equitable path, in proportion to their dollar shortfall, so each such group's raise is the same ",
+          "fraction of the raise it needed.")),
       div(cls := "grid-2", styleAttr := "margin-top:16px",
         card("Implied marginal tax rates", b.map((k, _) => planSub("Smoothed, current law vs ", k, "")), mtr),
-        card("Pre-tax income", b.map((k, _) => planSub("Long-run % change under ", k, "")), pretax)
+        card("Pre-tax income", b.map((k, _) => planSub("Distance from the equitable path, today and under ", k, " (long-run)")), pretax, Some(pretaxTable), capped = true)
       ),
       div(styleAttr := "margin-top:16px",
-        card("After-tax income", b.map((k, _) => planSub("% change under ", k, "")), aftertax)
+        card("After-tax income", b.map((k, _) => planSub("Distance from the equitable path, today and under ", k, "")), aftertax, Some(aftertaxTable), capped = true)
       )
     )
