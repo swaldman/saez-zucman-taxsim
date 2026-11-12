@@ -35,7 +35,7 @@ object FiguresPage:
         label(cls := "toggle",
           input(typ := "checkbox", controlled(checked <-- health.signal, onClick.mapToChecked --> health.writer)),
           span("Count employer-paid private health insurance as a tax",
-            span(cls := "muted small", " (a ~7%-of-income “privatized poll tax” on covered workers)")))
+            span(cls := "muted small", " (about 7% of national income; roughly a fixed amount per covered worker, so it weighs most on middle incomes)")))
       ),
 
       // 0. History by income group (data only: no plan, but it does depend on the health option)

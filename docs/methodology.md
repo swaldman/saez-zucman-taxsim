@@ -41,7 +41,7 @@ Background sources: `reference/SZ2019Appendix.pdf` (data construction) and
   - Corporate tax falls on owners of C-corporation equity.
   - Property tax falls on owners.
   - Payroll taxes fall on workers.
-  - Employer health premiums are treated as a privatized poll tax on covered workers.
+  - Employer health premiums are treated as a privatized head tax on covered workers: roughly the same dollar amount per covered worker, whatever the wage.
 
 ## 2. The basic approach: observed baseline, modeled changes
 

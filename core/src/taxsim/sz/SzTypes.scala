@@ -15,7 +15,7 @@ package taxsim.sz
  *  @param incomeTaxRate          individual income taxes, federal + state [ditax]
  *  @param corporateTaxRate       corporate taxes, allocated to equity owners [corptax]
  *  @param estateTaxRate          estate tax [estatetax]
- *  @param healthInsuranceRate    employer-sponsored private health insurance, viewed as a poll tax [healthtax]
+ *  @param healthInsuranceRate    employer-sponsored private health insurance, viewed as a head tax [healthtax]
  *  @param capitalGains           average realized capital gains in fiscal income [fikgi]
  *  @param dividends              average dividends in fiscal income [fidiv]
  *  @param fiscalIncome           average adjusted gross income [agi]

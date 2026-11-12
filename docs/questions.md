@@ -183,7 +183,7 @@ existing taxes? We'd like to implement them, since they are natural levers for m
 
 1. Is the linear scaling of the estate tax a deliberate simplification? Would you model the
    exemption threshold (for example with an excess curve over estates)?
-2. Where does 0.55 come from? Is it the employer share of premiums, applied to the poll-tax profile?
+2. Where does 0.55 come from? Is it the employer share of premiums, applied to the profile of private premiums (`healthtax`)?
 3. For each hard-coded constant, what is the source, and how should it be updated?
    - 1308: C-corporation profits ($bn)
    - 150: federal corporate tax
