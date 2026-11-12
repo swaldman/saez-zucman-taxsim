@@ -112,7 +112,7 @@ object SimulatorPage:
         div(cls := "card-head", div(cls := "titles", h2("Your plan, by tax"), p("Effective rate of each tax by income group."))),
         Charts.legend(breakdown, rects = true),
         Charts.lineChart(App.xs, breakdown, App.ticks, App.labels, App.groupSub, stacked = true, height = 300, ariaLabel = "Your plan by tax"),
-        Charts.dataTable(App.labels, breakdown)
+        Charts.dataTable(App.labels, breakdown.map(App.withTotal))
       ),
       div(cls := "card",
         div(cls := "card-head", div(cls := "titles", h2("Revenue by tax"), p("Share of national income; change in dollars per year."))),

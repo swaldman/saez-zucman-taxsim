@@ -65,3 +65,7 @@ object App:
       val vs = out.groups.map(o => c.ids.map(id => (if proposed then o.proposed else o.baseline).getOrElse(id, 0.0)).sum)
       if vs.forall(v => math.abs(v) < 1e-12) then None else Some(Series(c.label, c.cls, vs))
     }
+
+  /** A breakdown with a leading "Total tax" column (the height of the stack), for data tables. */
+  def withTotal(parts: Seq[Series]): Seq[Series] =
+    Series("Total tax", "", xs.indices.map(i => parts.map(_.values(i)).sum)) +: parts

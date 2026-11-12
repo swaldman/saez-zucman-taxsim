@@ -131,7 +131,7 @@ object FiguresPage:
       div(cls := "card-head", div(cls := "titles", h2(title), p(child <-- sub))),
       Charts.legend(series, rects = true),
       Charts.lineChart(App.xs, series, App.ticks, App.labels, App.groupSub, stacked = true, height = 300, yRangeSig = yr, ariaLabel = title),
-      Charts.dataTable(App.labels, series)
+      Charts.dataTable(App.labels, series.map(App.withTotal))
     )
 
   private def historyCard(health: Signal[Boolean], chosen: Signal[(String, Outcome)]): HtmlElement =

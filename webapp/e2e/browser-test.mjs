@@ -203,6 +203,15 @@ try {
     await settle();
     const tip = await evalJs(`document.querySelector('.tooltip')?.innerText ?? ''`);
     check("figures: hovering a chart shows a tooltip with every plan", ["Sanders", "Warren", "Biden", "Current law"].every((s) => tip.includes(s)), tip.split("\n").slice(0, 3));
+    const totals = await evalJs(`(() => {
+      const tables = [...document.querySelectorAll('details.data table')];
+      const head = (t) => [...t.querySelectorAll('thead th')].map((h) => h.textContent);
+      const col = (t, name) => { const j = head(t).indexOf(name); return [...t.querySelectorAll('tbody tr')].map((r) => r.cells[j].textContent); };
+      const plans = tables.find((t) => head(t).includes('Current law (2018)'));
+      const cur = tables.find((t) => head(t)[1] === 'Total tax');
+      return plans && cur ? [col(plans, 'Current law (2018)'), col(cur, 'Total tax')] : null; })()`);
+    check("figures: the by-tax table's 'Total tax' column matches the current-law curve",
+      totals !== null && totals[0].length > 100 && totals[0].every((v, i) => v === totals[1][i]), totals && totals.map((c) => c.slice(-3)));
     await evalJs(`{ const sel = document.getElementById('plan-select'); sel.value = 'sanders';
       sel.dispatchEvent(new Event('change', { bubbles: true })); }`);
     await settle();
