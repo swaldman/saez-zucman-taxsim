@@ -197,7 +197,7 @@ try {
     const want = { "Biden": "+1.51%", "Buttigieg": "+3.88%", "Sanders": "+2.91%", "Warren": "+3.24%" };
     const got = Object.fromEntries(rev.filter(([k]) => k in want));
     check("figures: revenue table reproduces the published figures", Object.keys(want).every((k) => got[k] === want[k]), got);
-    const box = await evalJs(`(() => { const r = document.querySelector('.chart svg').getBoundingClientRect();
+    const box = await evalJs(`(() => { const r = document.querySelector('[aria-label^="Total tax rates by income group for each plan"] svg').getBoundingClientRect();
       return [r.left + r.width * 0.85, r.top + r.height * 0.5]; })()`);
     await S("Input.dispatchMouseEvent", { type: "mouseMoved", x: box[0], y: box[1] });
     await settle();

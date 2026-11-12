@@ -38,6 +38,9 @@ object FiguresPage:
             span(cls := "muted small", " (a ~7%-of-income “privatized poll tax” on covered workers)")))
       ),
 
+      // 0. History by income group (data only: no plan, but it does depend on the health option)
+      byYearCard(health.signal),
+
       // 1. Candidate plans
       div(cls := "card",
         div(cls := "card-head", div(cls := "titles",
@@ -113,7 +116,6 @@ object FiguresPage:
 
       // 4. History
       historyCard(health.signal, chosen),
-      byYearCard(health.signal),
 
       // 5. Long-run effects
       behavioralCards(chosen)
@@ -172,7 +174,9 @@ object FiguresPage:
     div(cls := "card",
       div(cls := "card-head", div(cls := "titles",
         h2("Tax rates by income group over time"),
-        p("Total tax rate by income group in 1950, 1980, 2000 and 2018 (the workbook's historical animation shows every decade)."))),
+        p("Total tax rate by income group in 1950, 1980, 2000 and 2018 (the workbook's historical animation shows every decade). ",
+          child.text <-- health.map(h =>
+            if h then "Private health insurance counted as a tax." else "Private health insurance not counted as a tax.")))),
       Charts.legend(series),
       Charts.lineChart(App.xs, series, App.ticks, App.labels, App.groupSub, ariaLabel = "Tax rates by income group in selected years"),
       Charts.dataTable(App.labels, series)
