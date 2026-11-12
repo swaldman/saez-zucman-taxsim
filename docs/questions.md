@@ -367,3 +367,46 @@ payroll tax and CEO-pay surtax as a 2% national income tax.
    Injustice*, which taxes all income including retained earnings?
 3. **Interactions.** Is it net of any existing taxes? How should it change if private health
    premiums become cash wages, as in the Sanders and Warren plans?
+
+---
+
+## 16. The behavioral block at very high combined rates [Medium]
+
+**Context.** The long-run responses (section 9) multiply pre-tax income by
+`((1 − m_p)/(1 − m_c))^ε`, using constant elasticities: 0.25 for output, plus 0.5 for bargaining
+at the top. The proposed implied marginal rate `m_p` is capped at 0.99. Under the most ambitious
+plans, the top groups face proposed marginal and average rates that are far outside anything
+observed. For the top 400, with health insurance counted as a tax, after-tax income per adult is:
+
+| | Pre-tax income | Total tax rate | After-tax income |
+|---|---|---|---|
+| 2018, actual | $457m | 23% | $351m |
+| Sanders, static | $457m | 98% | $8.0m |
+| Sanders, long-run | $107m | 98% | $1.9m |
+| Warren, long-run | $189m | 86% | $25.6m |
+
+Two things drive these numbers:
+
+- **Long-run pre-tax income falls about 77% under Sanders.** That is largely a consequence of the
+  functional form as `m_p` approaches the cap, not of any observed response.
+- **The 98% average rate is mostly the wealth tax.** It is applied to an unchanged wealth base,
+  although a tax of that size would erode the base over time.
+
+Compared with the "equitable growth" benchmark (each group's 1980 after-tax income scaled by
+average after-tax growth: $36.5m for the top 400), Sanders' plan would leave the top 400 at about
+1/19 of the path. That is also about 1/12 of their 1980 income in real terms. Our website now
+plots "raise still needed to reach the path", and at the top under Sanders it reaches about
++1,800%.
+
+**Questions.**
+
+1. **Range of validity.** Is the behavioral block meant to be used at combined marginal and
+   average rates this high? Is there a range of rates beyond which you'd advise against showing
+   it?
+2. **Functional form.** Would you prefer a different form at high rates, for example a lower cap
+   on `m_p` or elasticities that decline as rates rise?
+3. **Dynamic wealth.** For a wealth tax at these rates, should the static calculation be paired
+   with a projection of the declining wealth base (as in your wealth-tax revenue estimates), rather
+   than taxing 2018 wealth indefinitely?
+4. **Presentation.** Is "raise still needed to reach the equitable path" a measure you're
+   comfortable with? Or would you rather we show the plans' percentage changes in income directly?
