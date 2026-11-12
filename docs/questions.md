@@ -274,3 +274,96 @@ payroll + income + corporate + estate) by up to 1e-8. This looks like float32 ro
 output. Our generic engine uses the sum, so a zero reform raises exactly zero revenue.
 
 **Question.** Just to confirm: is this only storage precision?
+
+---
+
+## 13. Why some taxes are adjusted additively and others proportionally [High]
+
+**Context.** The model never computes current taxes from the statutes. It anchors on each group's
+*observed* effective rate for each tax and applies only the *change* implied by a reform. The gap
+between what the textbook rules would collect and what is observed (deductions, credits, state
+taxes, avoidance, evasion, timing) is never estimated. It is held fixed under reform, in one of two
+ways:
+
+- **Additive (individual income tax).**
+  `new rate = observed rate + [T(proposed brackets) − T(current brackets)] / income`,
+  with T computed on taxable-income excess curves (column W). The residual is held fixed *in
+  amount*: credits, state income taxes and avoidance don't change when federal brackets do.
+- **Proportional (corporate, estate, sales, private health insurance).**
+  `new rate = observed rate × (proposed aggregate / current aggregate)`. The corporate tax, for
+  example, is scaled by `(rate_p + foreign_p) / (rate_c + foreign_c)` on $1,308bn of profits
+  (column V). The residual (state corporate taxes, profit shifting, credits) is held fixed *in
+  proportion*.
+
+The corporate lever is an *effective* rate (current: 210/1308 ≈ 16%), not the 21% statutory rate.
+Your January 2020 summary translates candidates' statutory proposals into effective rates by
+judgment, for example "federal nominal rate back to 35% ⇒ effective fed+state rate up to 25%".
+
+**Questions.**
+
+1. **The two regimes.** Is the choice between additive and proportional adjustment deliberate for
+   each tax? What's the reasoning? For instance, why should the income-tax residual stay fixed in
+   amount while the corporate residual scales?
+2. **Stability under large reforms.** How stable do you expect these residuals to be under large
+   reforms, such as top marginal rates of 55–68% or a 30% effective corporate rate? Would you model
+   any avoidance response beyond the wealth-tax evasion and estate-tax avoidance parameters?
+3. **Statutory to effective.** Is there a documented rule for translating statutory corporate rates
+   (and minimum taxes or foreign-profit rules) into the effective-rate lever? If so, we'd like to
+   implement it, so users can enter statutory rates.
+
+---
+
+## 14. Fiscal income relative to economic income under reform [High]
+
+**Context.** The income tax applies to *fiscal* income: realized gains, dividends, AGI, taxable
+income. Rates are measured against *economic* income. Each group's ratio of the two comes from
+DINA, where both are measured on the same synthetic individuals. For the top 400 the ratio is
+capped at 45%. Under reform the model holds this relationship fixed:
+
+- Taxing capital gains as ordinary income (with the step-up at death eliminated) is assumed not to
+  change realizations. The workbook's note (calculator AB30) says "assume that step up + full tax
+  does not reduce K gains".
+- Taxing dividends fully is not modeled as changing payout. The workbook notes (AB28) that "full
+  tax would shrink divs. and increase KG", but this isn't implemented.
+- Integration is modeled with no behavioral response (AB29).
+
+Many of the plans work precisely by narrowing the gap between fiscal and economic income: full
+taxation of gains, taxing gains at death, mark-to-market, integration, a national income tax. So
+the ratio's stability matters a lot for them.
+
+**Questions.**
+
+1. **Static convention.** Is holding realizations and payouts fixed intended as a static-scoring
+   convention, to be read alongside the long-run behavioral block?
+2. **Realization responses.** For plans that tax gains fully but only on realization, would you
+   apply a realization elasticity, or rely on taxation at death to limit deferral?
+3. **Mark-to-market.** How should accrual taxation (Warren, Buttigieg) be represented? By raising
+   the fiscal-to-economic ratio toward the share of income that consists of accrued gains?
+4. **The top 400.** Does the 45% figure for the top 400 interact with these reforms? For example,
+   does taxing gains at death or on accrual effectively lift it?
+
+---
+
+## 15. Definition of the national income tax base (`nitaxbase`) [Medium]
+
+**Context.** The flat national income tax is `rate × nitaxbase / denom` (column R). `nitaxbase` is
+an economic concept, but it is narrower than the rate denominator:
+
+| Population | `nitaxbase` as a share of `denom` |
+|---|---|
+| All groups | about 91% |
+| Range across groups | 63% (near the bottom) to nearly 100% |
+| Top 400 | about 89% of pre-tax income (`avg`), excluding pure capital gains |
+
+The "book" plan uses a 7% national income tax, and the Sanders plan approximates his employer
+payroll tax and CEO-pay surtax as a 2% national income tax.
+
+**Questions.**
+
+1. **The definition.** What exactly does `nitaxbase` include and exclude? For example: imputed
+   rent, investment income of pension funds, employer pension and health contributions, retained
+   earnings, income of non-filers, pure capital gains.
+2. **The book's tax.** Is it the base of the national income tax proposed in *The Triumph of
+   Injustice*, which taxes all income including retained earnings?
+3. **Interactions.** Is it net of any existing taxes? How should it change if private health
+   premiums become cash wages, as in the Sanders and Warren plans?
