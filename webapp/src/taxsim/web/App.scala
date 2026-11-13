@@ -39,7 +39,7 @@ object App:
 
   def behavioral(out: Outcome): BehavioralResult =
     Behavioral.run(
-      Behavioral.fromOutcome(out, Sz2019.growth.counterfactualIncome, Sz2019.growth.missingIncomeRaise),
+      Behavioral.fromOutcome(out, Sz2019.growth.endYearIncome, Sz2019.growth.missingIncomeRaise),
       UsModel.behavioralSettings(Sz2019.options, Sz2019.params))
 
   /** Income-weighted average rate over groups selected by percentile. */

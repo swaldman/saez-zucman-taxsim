@@ -56,7 +56,7 @@ class GenericModelEquivalenceTest extends munit.FunSuite:
   test("behavioral block on the generic outcome equals the workbook port") {
     val ref = SzBehavioral.run(SzModel.run(Sz2019.groups, Sz2019.current, Sz2019.presets("sanders"), Sz2019.options), Sz2019.growth, Sz2019.options)
     val out = Engine.run(model, model.presets("sanders"))
-    val b = Behavioral.run(Behavioral.fromOutcome(out, Sz2019.growth.counterfactualIncome, Sz2019.growth.missingIncomeRaise),
+    val b = Behavioral.run(Behavioral.fromOutcome(out, Sz2019.growth.endYearIncome, Sz2019.growth.missingIncomeRaise),
       UsModel.behavioralSettings(Sz2019.options, Sz2019.params))
     // Baselines differ by the float32 effrate residual (≤ 1e-8), which the slope-based MTRs amplify slightly.
     for (x, y) <- b.groups.zip(ref.groups) do

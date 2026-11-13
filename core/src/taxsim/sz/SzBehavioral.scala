@@ -13,7 +13,7 @@ object SzBehavioral:
     val gs = static.groups
     Behavioral.run(
       BehavioralInputs(gs.map(_.group.percentile), gs.map(_.group.adults), gs.map(_.group.income),
-        gs.map(_.currentRate), gs.map(_.proposedRate), growth.counterfactualIncome, growth.missingIncomeRaise),
+        gs.map(_.currentRate), gs.map(_.proposedRate), growth.endYearIncome, growth.missingIncomeRaise),
       settings(options, p)
     )
 

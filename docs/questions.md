@@ -456,3 +456,34 @@ convexity violations ([`architecture.md`](architecture.md), "Known limits of the
    artifact of the export?
 2. If it's for disclosure, would you be comfortable sharing these rows at full precision for this
    use, or should we keep the rounded values and smooth the curves ourselves?
+
+---
+
+## 18. The `growth` sheet's 2018 figures differ from `databig` [Low]
+
+**Context.** The behavioral block takes two inputs from sheet `growth`: each group's 2018 pre-tax
+income (column G) and its shortfall relative to equitable growth since 1980 (column L, and M for
+after-tax). Their product, floored at zero, is the group's dollar shortfall, which allocates the
+income redistributed through the bargaining response (`DG`). The sheet's 2018 columns are linked to
+an external workbook (`'[3]TC8(2018)'`). They don't quite match `databig`:
+
+- **Pre-tax income.** `growth!G` equals `denom` in 85 of 128 groups. Below P90 every difference is
+  at most $1 (rounding). Within the top 10% it is higher than `denom` by 0.01–3.5%. The largest gap is in
+  the P99.999 row, where it is 54% higher ($214.6m against $139.0m), apparently because that row
+  of `growth` covers the whole top 0.001%, *including* the top 400 (the next row is labeled
+  "Of which: Top 400"). In `databig`, the same row excludes the top 400.
+- **Tax rates.** `growth!H` (2018 tax rate) differs from `effrate` by 0.25 percentage points on
+  average, and by up to 3 points (P99.996). It matches `effrate + healthtax` in only one group, so
+  the difference isn't just the treatment of health insurance.
+
+**Effect.** Small. The dollar shortfall only matters where the shortfall is positive, below about
+P90. There, the two sheets agree. The differences above P90 change nothing computed. But they do
+change what the website shows: the after-tax "raise needed" line uses `growth!M`, which is built
+from the `growth` sheet's own rates.
+
+**Questions.**
+
+1. Do the 1980 and 2018 tables (`TC4(1980)`, `TC8(2018)`) come from a different vintage or
+   definition than `databig`? Should we rebuild them from the same files when we update the data?
+2. Is the P99.999 row of `growth` meant to include the top 400? If it is, should the behavioral
+   block use separate rows for P99.999–(top 400) and the top 400, to match `databig`?

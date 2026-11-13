@@ -23,7 +23,8 @@ final case class BehavioralGroup(
 final case class BehavioralResult(groups: IndexedSeq[BehavioralGroup], aggregatePretaxIncomeChange: Double, aggregateAftertaxIncomeGain: Double)
 
 /** Inputs to the behavioral block, aligned by group (ranked by income).
- *  @param counterfactualIncome pre-tax income with "equitable" growth since a base year
+ *  @param endYearIncome actual pre-tax income in the end year of the growth comparison (e.g. 2018);
+ *         the group's dollar shortfall is endYearIncome × missingIncomeRaise
  *  @param missingIncomeRaise   proportional shortfall versus equitable growth */
 final case class BehavioralInputs(
     percentile: IndexedSeq[Double],
@@ -31,7 +32,7 @@ final case class BehavioralInputs(
     income: IndexedSeq[Double],
     currentRate: IndexedSeq[Double],
     proposedRate: IndexedSeq[Double],
-    counterfactualIncome: IndexedSeq[Double],
+    endYearIncome: IndexedSeq[Double],
     missingIncomeRaise: IndexedSeq[Double]
 )
 
@@ -53,14 +54,14 @@ final case class BehavioralSettings(
  *     is redistributed in proportion to each group's shortfall relative to equitable growth. */
 object Behavioral:
 
-  def fromOutcome(o: Outcome, counterfactualIncome: IndexedSeq[Double], missingIncomeRaise: IndexedSeq[Double]): BehavioralInputs =
+  def fromOutcome(o: Outcome, endYearIncome: IndexedSeq[Double], missingIncomeRaise: IndexedSeq[Double]): BehavioralInputs =
     val gs = o.groups
     BehavioralInputs(gs.map(_.group.percentile), gs.map(_.group.adults), gs.map(_.group.income),
-      gs.map(_.baselineTotal), gs.map(_.proposedTotal), counterfactualIncome, missingIncomeRaise)
+      gs.map(_.baselineTotal), gs.map(_.proposedTotal), endYearIncome, missingIncomeRaise)
 
   def run(in: BehavioralInputs, s: BehavioralSettings): BehavioralResult =
     val m = in.income.length
-    require(Seq(in.percentile, in.adults, in.currentRate, in.proposedRate, in.counterfactualIncome, in.missingIncomeRaise).forall(_.length == m),
+    require(Seq(in.percentile, in.adults, in.currentRate, in.proposedRate, in.endYearIncome, in.missingIncomeRaise).forall(_.length == m),
       "behavioral inputs not aligned")
     val n = in.adults
     val y = in.income
@@ -86,7 +87,7 @@ object Behavioral:
       if w <= 0 then real(i) else real(i) * math.pow(ratio(i), w * s.bargainingElasticity)
     }
     val gain = IndexedSeq.tabulate(m)(i => bargained(i) - real(i))
-    val missing = IndexedSeq.tabulate(m)(i => math.max(in.counterfactualIncome(i) * in.missingIncomeRaise(i), 0.0))
+    val missing = IndexedSeq.tabulate(m)(i => math.max(in.endYearIncome(i) * in.missingIncomeRaise(i), 0.0))
     val avgGain = Numerics.mean(gain, n)
     val avgMissing = Numerics.mean(missing, n)
     val bottomGain = missing.map(d => -d * avgGain / avgMissing)

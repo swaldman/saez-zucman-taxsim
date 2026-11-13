@@ -56,9 +56,12 @@ final case class SzGroup(
 )
 
 /** Inputs for the optional long-run behavioral block. One entry per group, aligned with the groups.
- *  @param counterfactualIncome  pre-tax income the group would have had with "equitable" growth since a base year [growth!G]
+ *  @param endYearIncome         actual pre-tax income in the end year of the growth comparison, 2018 [growth!G].
+ *                               (The counterfactual "equitable growth" income is growth!J; only the shortfall
+ *                               ratio below and this actual income are used.) Close to, but not always equal to,
+ *                               `SzGroup.income`: the sheet comes from a different source table.
  *  @param missingIncomeRaise    proportional income shortfall versus equitable growth [growth!L] */
-final case class SzGrowth(counterfactualIncome: IndexedSeq[Double], missingIncomeRaise: IndexedSeq[Double])
+final case class SzGrowth(endYearIncome: IndexedSeq[Double], missingIncomeRaise: IndexedSeq[Double])
 
 /** A tax system, described with the levers of the taxjusticenow.org interface.
  *  Rates are fractions (0.37 = 37%). Bracket rate vectors are marginal rates, aligned with the
