@@ -24,6 +24,7 @@ object SzCodecs:
     val labels = csv.column("gperc")
     val pct = csv.doubles("gperc")
     val c = (name: String) => csv.doubles(name)
+    val avg = c("avg")
     val (nb, denom, effrate, sales, prop, payroll, ditax, corp, estate, health) =
       (c("nb"), c("denom"), c("effrate"), c("salestax"), c("proptax"), c("govcontrib"), c("ditax"), c("corptax"), c("estatetax"), c("healthtax"))
     val (kg, div, agi, hweal, nibase, mtr, mtrx, dicsh) =
@@ -51,7 +52,8 @@ object SzCodecs:
         nationalIncomeTaxBase = nibase(i),
         marginalRate = mtr(i),
         marginalRateAbove20 = mtrx(i),
-        disposableCashIncome = dicsh(i)
+        disposableCashIncome = dicsh(i),
+        pretaxIncome = avg(i)
       )
     }
 

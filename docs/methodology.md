@@ -21,14 +21,38 @@ Background sources: `reference/SZ2019Appendix.pdf` (data construction) and
   simulator uses DINA values for 2018 (projected to that year as described in
   `SZ2019Appendix.pdf`), aggregated into the groups below.
 - **Population.** Adults (20+), incomes of married couples split equally, ranked by *pre-tax
-  national income plus "pure" capital gains*. "Pure" capital gains are realized taxable gains in excess
-  of 3% of national income, treated as asset-price gains rather than retained earnings. Adults with
-  pre-tax income below half the federal minimum wage (≈ $7,500) are excluded. That excludes about
-  10% of adults and almost no income.
+  national income* (the DINA concept, which excludes capital gains). Adults with pre-tax income
+  below half the federal minimum wage (≈ $7,500) are excluded. That excludes about 10% of adults
+  and almost no income.
+- **Two income concepts.** Groups are defined by one income concept, and rates are measured against
+  another:
+  - **`avg`: pre-tax national income.** This is the ranking variable. The group thresholds
+    (`thres`, rounded to three significant figures) are cutoffs of it. In every group but one,
+    `avg` lies between its own threshold and the next, typically near the middle. The exception is
+    the top 400, whose `avg` is $6,304 below its rounded $416m threshold.
+  - **`denom`: pre-tax income plus "pure" capital gains.** This is the denominator of every
+    effective rate, and the weight `n · denom` used to aggregate rates. "Pure" capital gains are
+    realized taxable gains in excess of 3% of national income, treated as asset-price gains rather
+    than retained earnings, which `avg` already includes (Appendix, note 11). Including them
+    prevents the taxes on realized gains from being measured against an income that leaves the
+    gains out.
+  - **How pure gains are allocated.** In the 2018 data, `denom − avg` = 0.366 × realized capital
+    gains (`fikgi`). It holds to 0.3655–0.3663 in all 41 groups with realized gains above $1,000
+    per adult; below that, rounding of the stored whole-dollar values makes the ratio noisy. The
+    test is `IncomeConceptsTest`. The aggregate pure
+    share of realized gains is thus applied uniformly, rather than estimated group by group.
+    Realized gains total $861bn, about 4.9% of national income, and (4.9% − 3%) / 4.9% is roughly
+    37–39%, depending on the national income total used.
+  - **Size of the difference.** Overall, `denom` exceeds `avg` by 1.8%. The gap is under 0.5%
+    below P99, and 10–18% from P99.995 up, including the top 400.
+
+  `denom` is therefore never the ranking variable. A group's `denom` can lie above the next
+  group's threshold: P99.99–99.991's `denom` is $15.0m, against thresholds of $12.6m and $13.8m.
+  `thres` is not used by any formula.
 - **Groups.** 128 groups: percentiles P0–1 … P98–99, then P99–99.1 … P99.9–99.91 … P99.99–99.991 …
   P99.999–(top 400), and the top 400 adults (`databig` rows 2–129; `gperc` 400 = top 400).
 - **Per-group inputs** (`databig`; see `SzGroup` for the full mapping). Number of adults,
-  average income (`denom`), and current effective rates by tax: sales/excise, property,
+  the two average incomes (`avg`, `denom`), and current effective rates by tax: sales/excise, property,
   payroll/social contributions, individual income (federal + state), corporate, estate, and
   employer-sponsored private health insurance. There is also fiscal income composition (realized
   capital gains, dividends, AGI) and average wealth. Wealth and taxable income enter as **average

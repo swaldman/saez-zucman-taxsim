@@ -15,8 +15,11 @@ object Sz2019:
    *  (calculator!AQ22:AS22), expressed as multiples of their wealth above $1bn. */
   val top400WealthImputation: Map[Double, Double] = Map(2.5e9 -> 0.9, 5e9 -> 0.6, 10e9 -> 0.45)
 
+  /** The workbook's `databig` sheet as parsed CSV, with every column (including ones the model does not use, such as `thres`). */
+  lazy val databig: Csv = Csv.parse(Sz2019Raw.databigCsv)
+
   lazy val groups: IndexedSeq[SzGroup] =
-    val raw = SzCodecs.groupsFromDatabig(Csv.parse(Sz2019Raw.databigCsv), params)
+    val raw = SzCodecs.groupsFromDatabig(databig, params)
     SzCodecs.imputeWealthExcess(raw, params, 1e9, top400WealthImputation, _.label == "400")
 
   lazy val growth: SzGrowth = SzCodecs.growthFromCsv(Csv.parse(Sz2019Raw.growthCsv))

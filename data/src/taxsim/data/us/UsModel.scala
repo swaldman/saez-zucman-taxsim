@@ -97,7 +97,8 @@ object UsModel:
       "nationalIncomeTaxBase" -> g.nationalIncomeTaxBase,
       "marginalRate" -> g.marginalRate,
       "marginalRateAbove20" -> g.marginalRateAbove20,
-      "disposableCashIncome" -> g.disposableCashIncome
+      "disposableCashIncome" -> g.disposableCashIncome,
+      "pretaxIncome" -> g.pretaxIncome
     ),
     excess = Map(
       "wealth" -> ExcessCurve(params.wealthThresholds, pad(g.wealthExcess, params.wealthThresholds.length)),

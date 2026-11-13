@@ -29,6 +29,35 @@ thresholds and interpolates between them:
 So users can move thresholds anywhere. For example, "50% above $3m" uses
 `Schedule.withMinimumRateAbove`.
 
+**Known limits of the excess curves.** These are not yet addressed. A scan of the 2018 data
+(November 2026) found two of them:
+
+- **The interpolated curves are not globally convex.** Each segment between grid points is fitted
+  on its own, and stays within its own bounds. But the slopes of neighboring segments often disagree
+  where they meet, at 896 of the 1,119 interior grid points with positive excess (323 for wealth,
+  573 for taxable income).
+  - The slope of X is minus the share of the group above t. So read as a distribution, these points
+    imply negative masses, often tens of percent of the group.
+  - The typical cause is a two-point Pareto fit that starts out steeper than −1 and is clamped to
+    the lower bound: "everyone above t" on the right, against, say, 24% above t on the left (P76 at
+    $77k).
+  - The tabulated data themselves are convex, up to rounding noise. So a globally convex
+    interpolation exists; one candidate is shape-preserving, generalized-Pareto style.
+  - Values, and so taxes at any threshold, stay within valid bounds. Anything that uses slopes is
+    unreliable until this is fixed: counts of taxpayers above a threshold, bracket-level behavioral
+    responses, marginal-rate profiles. The derivative of revenue with respect to a threshold also
+    jumps at grid points.
+- **The data leave wide ranges between grid points.** Any interpolation consistent with the data,
+  including a perfect convex one, must lie between the chord and the lower bound. Summed over
+  groups at off-grid thresholds, that range is 12–31% of the estimate, which sits near the middle
+  (41–63% of the way up). For example, wealth above $750m is somewhere in $3.1–3.7tn, and our
+  estimate is $3.5tn. Fixing convexity won't narrow this. Two things would:
+  - a denser grid in the data ([`questions.md`](questions.md) §10.6);
+  - using information across neighboring groups (each group is a narrow income band).
+
+The top two rows' wealth columns are also rounded in the source data ([`questions.md`](questions.md)
+§17), which produces the largest violations.
+
 **The difference method preserves calibration.** A computed tax is applied as
 `reformed = observed baseline + T(proposed) − T(current)`. A zero reform therefore reproduces the
 observed incidence exactly. This is true even when the model's formula for T is only an

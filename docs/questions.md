@@ -252,6 +252,16 @@ These aren't quirks, but we need answers to refresh the US data and build other 
 5. **Other countries.** Which datasets would you start from for other countries: EU-DINA, WID, or
    the Fisher-Post–Gethin redistribution database? Have you, or the EU Tax Observatory, built similar
    per-group tax-incidence files (including excess curves) for European countries that we could use?
+6. **A denser grid of excess thresholds.** Brackets between the data's thresholds are interpolated
+   within each group (see [`architecture.md`](architecture.md), "Known limits of the excess
+   curves"). Wherever a threshold falls between grid points, the data allow a wide range of
+   values: for the 2018 data, summed over all groups, the range is 12–31% of the estimate (for
+   example $709bn–$813bn of taxable income above $3m, and $3.1–3.7tn of wealth above $750m). Could
+   the data-building program output `wealth_Xm` and `taxinc_Xk` on a denser grid? For example,
+   about four thresholds per factor of ten, from $10k to $100bn, using the same grid for every
+   country. Alternatively, could it provide the share of each group's adults above each threshold
+   alongside the average excess? Either would pin down off-grid brackets far better than any
+   interpolation.
 
 ---
 
@@ -341,6 +351,13 @@ the ratio's stability matters a lot for them.
    the fiscal-to-economic ratio toward the share of income that consists of accrued gains?
 4. **The top 400.** Does the 45% figure for the top 400 interact with these reforms? For example,
    does taxing gains at death or on accrual effectively lift it?
+5. **Pure capital gains by group.** In `databig`, `denom − avg` equals 0.366 × realized gains
+   (`fikgi`) in every group (to rounding). So the aggregate pure share of realized gains (gains above 3% of
+   national income) seems to be applied uniformly. Is that intended? Retained earnings, and so the
+   non-pure part of gains, are concentrated among equity owners. A group-specific split could put a
+   different share of each group's gains in the denominator, which matters most at the top, where
+   pure gains are 10–18% of `avg`. Relatedly, which national income total defines the 3%? Our
+   estimate of the implied pure share depends on it.
 
 ---
 
@@ -410,3 +427,32 @@ plots "raise still needed to reach the path", and at the top under Sanders it re
    than taxing 2018 wealth indefinitely?
 4. **Presentation.** Is "raise still needed to reach the equitable path" a measure you're
    comfortable with? Or would you rather we show the plans' percentage changes in income directly?
+
+---
+
+## 17. Rounded wealth values in the top two rows [Low]
+
+**Context.** In `databig`, most values are stored at full precision. But in two rows the wealth
+columns are rounded to three significant figures:
+
+| Row | Rounded columns | Not rounded |
+|---|---|---|
+| P99.999–(top 400) | `hweal` and `wealth_0m` … `wealth_250m` (e.g. 1.23e9, 1.22e9, 1.21e9) | `wealth_500m`, `wealth_1000m` |
+| Top 400 | `hweal` and every `wealth_Xm` (4.27e9 for $0–$10m, then 4.26e9, 4.25e9, …, 3.77e9) | – |
+
+The income and tax columns in these rows are not rounded. The trailing digits (e.g. 4,270,000,128)
+are what single-precision storage of a rounded number produces, so the rounding is in the source
+file rather than in our extraction.
+
+The effect on wealth-tax revenue is small: rounding moves these groups' excesses by less than 0.5%.
+But it distorts the shape of their excess curves. For the top 400, six identical values from $0 to
+$10m imply that the excess doesn't fall at all over that range, when it should fall dollar for
+dollar, since all 400 are above $10m. Steps like this are where our scan found the largest
+convexity violations ([`architecture.md`](architecture.md), "Known limits of the excess curves").
+
+**Questions.**
+
+1. Is the rounding deliberate, for example for disclosure control of the very top? Or is it an
+   artifact of the export?
+2. If it's for disclosure, would you be comfortable sharing these rows at full precision for this
+   use, or should we keep the rounded values and smooth the curves ourselves?

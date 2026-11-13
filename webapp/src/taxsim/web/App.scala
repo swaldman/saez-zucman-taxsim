@@ -11,7 +11,13 @@ object App:
   val xs: IndexedSeq[Double] = groups.indices.map(_.toDouble)
   val ticks: Seq[(Double, String)] = Format.groupTicks(groups)
   val labels: IndexedSeq[String] = groups.indices.map(Format.groupLabel(groups, _))
-  def groupSub(i: Int): String = s"Average pre-tax income ${Format.amount(groups(i).income)}"
+  /** Tooltip subtitle. Groups are ranked by pre-tax income; rates are shares of pre-tax income plus
+   *  pure capital gains (`income`), shown too where the two differ by 1% or more. */
+  def groupSub(i: Int): String =
+    val g = groups(i)
+    val pretax = g.vars.getOrElse("pretaxIncome", g.income)
+    if math.abs(g.income / pretax - 1) < 0.01 then s"Average pre-tax income ${Format.amount(pretax)}"
+    else s"Average pre-tax income ${Format.amount(pretax)} (${Format.amount(g.income)} with pure capital gains)"
 
   final case class Plan(key: String, label: String, cls: String)
   /** The plans of the workbook's figure, in a fixed order; each keeps its color everywhere. */

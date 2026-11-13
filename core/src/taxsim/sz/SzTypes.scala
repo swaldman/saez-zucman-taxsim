@@ -1,8 +1,8 @@
 package taxsim.sz
 
 /** Per-group inputs of the Saez-Zucman simulator (one entry per income group, groups ranked
- *  by pre-tax income). Rates are effective rates as a share of `income`. Money amounts are
- *  per adult, in the dataset's currency. Spreadsheet column names (sheet `databig`) are in brackets.
+ *  by pre-tax national income excluding pure capital gains). Rates are effective rates as a
+ *  share of `income`. Money amounts are per adult, in the dataset's currency. Spreadsheet column names (sheet `databig`) are in brackets.
  *
  *  @param label                  group label, e.g. "0", "99.9", "400" [gperc]
  *  @param percentile             lower bound of the group in percentiles (top-N lines use a value > 100) [gperc]
@@ -26,6 +26,8 @@ package taxsim.sz
  *  @param marginalRate           average ordinary federal marginal income tax rate [mtr]
  *  @param marginalRateAbove20    average federal marginal rate above 20% [mtrextra]
  *  @param disposableCashIncome   average disposable cash income [dicsh]
+ *  @param pretaxIncome           average pre-tax national income excl. pure capital gains, the ranking variable [avg];
+ *                                `income` = `pretaxIncome` + pure capital gains (36.6% of realized gains in the 2018 data)
  */
 final case class SzGroup(
     label: String,
@@ -49,7 +51,8 @@ final case class SzGroup(
     nationalIncomeTaxBase: Double,
     marginalRate: Double,
     marginalRateAbove20: Double,
-    disposableCashIncome: Double
+    disposableCashIncome: Double,
+    pretaxIncome: Double
 )
 
 /** Inputs for the optional long-run behavioral block. One entry per group, aligned with the groups.
