@@ -30,17 +30,9 @@ abstract class ModelContext:
   type LabelParameterInt
   type LabelParameterBoolean
 
-  final case class ParameterDouble  (val label : LabelParameterDouble, val value : Double)   extends Parameter[LabelParameterDouble]
-  final case class ParameterInt     (val label : LabelParameterInt, val value : Int)         extends Parameter[LabelParameterInt]
-  final case class ParameterBoolean (val label : LabelParameterBoolean, val value : Boolean) extends Parameter[LabelParameterBoolean]
-
-  val parametersDouble  : Set[ParameterDouble]
-  val parametersInt     : Set[ParameterInt]
-  val parametersBoolean : Set[ParameterBoolean]
-
-  lazy val doubles  : Map[LabelParameterDouble,Double]   = parametersDouble.map(p => (p.label, p.value)).toMap
-  lazy val ints     : Map[LabelParameterInt,Int]         = parametersInt.map(p => (p.label, p.value)).toMap
-  lazy val booleans : Map[LabelParameterBoolean,Boolean] = parametersBoolean.map(p => (p.label, p.value)).toMap
+  val parametersDouble  : Map[LabelParameterDouble,Double]
+  val parametersInt     : Map[LabelParameterInt,Int]
+  val parametersBoolean : Map[LabelParameterBoolean,Boolean]
 
   trait Requirer[LD,LI,LB]:
     def requiresParametersDouble  : Set[LabelParameterDouble]
@@ -54,7 +46,7 @@ abstract class ModelContext:
     val augmentedTotalIncome   = augmentedAverageIncome.map( (k,v) => (k, v * k.size) ).toMap
 
 
-object SaezZucman2020ModelContext extends ModelContext:
+object SaezZucman2020Context extends ModelContext:
   enum LPDouble:
     case TaxableRealizedGainsAugmentation // income stats exclude realized gains, but the tax base does in part include them
 
@@ -64,15 +56,14 @@ object SaezZucman2020ModelContext extends ModelContext:
   override type LabelParameterInt     = Nothing
   override type LabelParameterBoolean = Nothing
 
-  override val parametersDouble : Set[ParameterDouble] =
-    Set(
-      ParameterDouble(TaxableRealizedGainsAugmentation,0.366) 
-    )
-  override val parametersInt     : Set[ParameterInt]     = Set.empty
-  override val parametersBoolean : Set[ParameterBoolean] = Set.empty
+  override val parametersDouble = Map(
+    TaxableRealizedGainsAugmentation -> 0.366
+  )
+  override val parametersInt     = Map.empty
+  override val parametersBoolean = Map.empty
 
   object Augmenter extends AverageIncomeAugmenter:
-    override def apply(g : Group, model : Model) = (1 + doubles(TaxableRealizedGainsAugmentation)) * g.averageIncome
+    override def apply(g : Group, model : Model) = (1 + parametersDouble(TaxableRealizedGainsAugmentation)) * g.averageIncome
     override def requiresParametersDouble  : Set[LabelParameterDouble]  = Set(TaxableRealizedGainsAugmentation)
     override def requiresParametersInt     : Set[LabelParameterInt]     = Set.empty
     override def requiresParametersBoolean : Set[LabelParameterBoolean] = Set.empty
