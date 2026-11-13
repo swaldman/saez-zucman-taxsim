@@ -48,7 +48,7 @@ abstract class ModelContext:
 
 object SaezZucman2020Context extends ModelContext:
   enum LPDouble:
-    case TaxableRealizedGainsAugmentation // income stats exclude realized gains, but the tax base does in part include them
+    case TaxableRealizedGainsAugmentationFactor // income stats exclude realized gains, but the tax base does in part include them
 
   import LPDouble.*
 
@@ -57,13 +57,13 @@ object SaezZucman2020Context extends ModelContext:
   override type LabelParameterBoolean = Nothing
 
   override val parametersDouble = Map(
-    TaxableRealizedGainsAugmentation -> 0.366
+    TaxableRealizedGainsAugmentationFactor -> 1.366
   )
   override val parametersInt     = Map.empty
   override val parametersBoolean = Map.empty
 
   object Augmenter extends AverageIncomeAugmenter:
-    override def apply(g : Group, model : Model) = (1 + parametersDouble(TaxableRealizedGainsAugmentation)) * g.averageIncome
-    override def requiresParametersDouble  : Set[LabelParameterDouble]  = Set(TaxableRealizedGainsAugmentation)
+    override def apply(g : Group, model : Model) = (parametersDouble(TaxableRealizedGainsAugmentationFactor)) * g.averageIncome
+    override def requiresParametersDouble  : Set[LabelParameterDouble]  = Set(TaxableRealizedGainsAugmentationFactor)
     override def requiresParametersInt     : Set[LabelParameterInt]     = Set.empty
     override def requiresParametersBoolean : Set[LabelParameterBoolean] = Set.empty
