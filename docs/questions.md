@@ -487,3 +487,31 @@ from the `growth` sheet's own rates.
    definition than `databig`? Should we rebuild them from the same files when we update the data?
 2. Is the P99.999 row of `growth` meant to include the top 400? If it is, should the behavioral
    block use separate rows for P99.999–(top 400) and the top 400, to match `databig`?
+
+---
+
+## 19. The "top 400" group has 515 adults in 2018 [Medium]
+
+**Context.** The appendix says the top-400 statistics "cover the top 400 adults with the highest
+pre-tax income", per equal-split adult. In the 2018 data, though, the top-400 row has `nb` = 515
+(`databig`), or 514.67 (`growth`, column F). For 1980, the `growth` sheet gives 401.4, close to 400.
+The fractional values show these are sums of microdata weights.
+
+The gap isn't explained by units: it isn't households or tax units, and 1980 is about 400 on the
+same basis. Nor is it explained by the appendix's projection from 2017 to 2018 (0.9% population
+growth), which would give about 404. One possibility is that the cutoff was set as 400 adults in an
+earlier data year and then carried forward as a population share. 400 × 216.7m / 515 ≈ 168m adults,
+roughly the mid-1990s population. We can't tell.
+
+**Effect.** The row labeled "top 400" describes the top ~515 adults. It is diluted with about 115
+lower-income people, so its average income and its rates aren't quite those of the top 400. This
+applies to the current 23% rate, the plans' top-400 rates, and the 45% fiscal-income cap. The
+P99.999–(top 400) row is correspondingly smaller. Totals and revenue are unaffected.
+
+**Questions.**
+
+1. Is 515 intended? If so, how is the top-400 group defined in the 2018 file?
+2. When we refresh the data, should the group be exactly 400 adults, by re-ranking on the final
+   year's weights? Or is there a reason to keep a fixed population share?
+3. Does the 45% fiscal-to-economic income cap (§14, item 4) apply to the 400 tax units, the 400
+   adults or the ~515 adults? The appendix describes it for "the top 400 tax units".

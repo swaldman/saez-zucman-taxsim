@@ -49,8 +49,19 @@ Background sources: `reference/SZ2019Appendix.pdf` (data construction) and
   `denom` is therefore never the ranking variable. A group's `denom` can lie above the next
   group's threshold: P99.99–99.991's `denom` is $15.0m, against thresholds of $12.6m and $13.8m.
   `thres` is not used by any formula.
+- **Unit.** Every count and average is per **equal-split adult**: adults aged 20 and over, with a
+  married couple's income and wealth split equally between the spouses. Not households, and not
+  tax units. In 2018, `nb` sums to 216.7 million adults (after the exclusion above).
 - **Groups.** 128 groups: percentiles P0–1 … P98–99, then P99–99.1 … P99.9–99.91 … P99.99–99.991 …
   P99.999–(top 400), and the top 400 adults (`databig` rows 2–129; `gperc` 400 = top 400).
+  - **The top 400** is meant to be the 400 adults with the highest pre-tax income (Appendix). That
+    differs from the IRS top 400 (tax units ranked by fiscal income) and from the Forbes 400
+    (ranked by wealth).
+  - **But `nb` for the top-400 row is 515 in 2018** (514.67 in sheet `growth`, against 401.4 for
+    1980). The counts are sums of microdata weights. So the row covers about 29% more adults than
+    its label, and every "top 400" figure, ours included, describes the top ~515 adults. The
+    P99.999–(top 400) row (1,667 adults) is correspondingly smaller. Totals and revenue are
+    unaffected. See [`questions.md`](questions.md) §19.
 - **Per-group inputs** (`databig`; see `SzGroup` for the full mapping). Number of adults,
   the two average incomes (`avg`, `denom`), and current effective rates by tax: sales/excise, property,
   payroll/social contributions, individual income (federal + state), corporate, estate, and
