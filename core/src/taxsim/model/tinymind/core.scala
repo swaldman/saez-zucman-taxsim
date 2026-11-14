@@ -2,6 +2,8 @@ package taxsim.model.tinymind
 
 import scala.collection.immutable
 
+import taxsim.model.{ExcessCurve,Schedule}
+
 trait Parameter[L]:
   def label : L
   def value : Any
@@ -26,35 +28,91 @@ final case class Groups( percentileGroups : immutable.SortedSet[PercentileGroup]
 
 abstract class ModelContext:
 
-  type LabelParameterDouble
-  type LabelParameterInt
-  type LabelParameterBoolean
+  trait Label
+
+  case class LabelNotImplemented private() extends Label
+
+  /* Constants assumed by the model */
+  type LabelParameterDouble  <: Label
+  type LabelParameterInt     <: Label
+  type LabelParameterBoolean <: Label
+
+  /* Per-group data */
+  type LabelDataDouble      <: Label
+  type LabelDataInt         <: Label
+  type LabelDataBoolean     <: Label
+  type LabelDataExcessCurve <: Label
+
+  /* Lever values the model assumes but which change change in countefactuals */
+  type LabelLeverDouble   <: Label
+  type LabelLeverInt      <: Label
+  type LabelLeverBoolean  <: Label
+  type LabelLeverSchedule <: Label
 
   val parametersDouble  : Map[LabelParameterDouble,Double]
   val parametersInt     : Map[LabelParameterInt,Int]
   val parametersBoolean : Map[LabelParameterBoolean,Boolean]
 
-  trait Requirer[LD,LI,LB]:
-    def requiresParametersDouble  : Set[LabelParameterDouble]
-    def requiresParametersInt     : Set[LabelParameterInt]
-    def requiresParametersBoolean : Set[LabelParameterBoolean]
+  trait Requirer:
+    def requires : Set[Label]
 
   abstract class AverageIncomeAugmenter extends Function2[Group,Model,Double], Requirer;
 
-  final case class Model(groups : Groups, augmenter : AverageIncomeAugmenter):
+  trait Instrument extends Requirer:
+    def baselineTaxRate( model : Model )(g : Group) : Double
+    def reformedTaxRate( model : Model, counterfactual : Counterfactual )(g : Group) : Double
+    def deltaTaxRate( model : Model, counterfactual : Counterfactual )(g : Group) : Double
+
+  case class CompoundInstrument(instruments : Set[Instrument]) extends Instrument:
+    override def baselineTaxRate( model : Model )(g : Group)                                  : Double = instruments.foldLeft(0.0d)((accum,next) => accum + next.baselineTaxRate(model)(g))
+    override def reformedTaxRate( model : Model, counterfactual : Counterfactual )(g : Group) : Double = instruments.foldLeft(0.0d)((accum,next) => accum + next.reformedTaxRate(model,counterfactual)(g))
+    override def deltaTaxRate( model : Model, counterfactual : Counterfactual )(g : Group)    : Double = instruments.foldLeft(0.0d)((accum,next) => accum + next.deltaTaxRate(model,counterfactual)(g))
+    override def requires : Set[Label] = instruments.foldLeft(Set.empty[Label])((accum,next) => accum ++ next.requires)
+
+  final case class Model(
+    groups          : Groups,
+    augmenter       : AverageIncomeAugmenter,
+    dataDouble      : Map[LabelDataDouble,Map[Group,Double]],
+    dataInt         : Map[LabelDataInt,Map[Group,Int]],
+    dataBoolean     : Map[LabelDataBoolean,Map[Group,Boolean]],
+    dataExcessCurve : Map[LabelDataExcessCurve,Map[Group,ExcessCurve]],
+    leverDouble     : Map[LabelLeverDouble,Map[Group,Double]],
+    leverInt        : Map[LabelLeverInt,Map[Group,Int]],
+    leverBoolean    : Map[LabelLeverBoolean,Map[Group,Boolean]],
+    leverSchedule   : Map[LabelLeverSchedule,Map[Group,Schedule]],
+  ):
     val augmentedAverageIncome = groups.toSeq.map(g => (g, augmenter(g, this))).toMap
     val augmentedTotalIncome   = augmentedAverageIncome.map( (k,v) => (k, v * k.size) ).toMap
 
+  final case class Counterfactual(
+    leverDouble     : Map[LabelLeverDouble,Map[Group,Double]],
+    leverInt        : Map[LabelLeverInt,Map[Group,Int]],
+    leverBoolean    : Map[LabelLeverBoolean,Map[Group,Boolean]],
+    leverSchedule   : Map[LabelLeverSchedule,Map[Group,Schedule]],
+  )
 
 object SaezZucman2020Context extends ModelContext:
-  enum LPDouble:
+  enum LPDouble extends Label:
     case TaxableRealizedGainsAugmentationFactor // income stats exclude realized gains, but the tax base does in part include them
 
   import LPDouble.*
 
+  /* Constants assumed by the model */
   override type LabelParameterDouble  = LPDouble
-  override type LabelParameterInt     = Nothing
-  override type LabelParameterBoolean = Nothing
+  override type LabelParameterInt     = LabelNotImplemented
+  override type LabelParameterBoolean = LabelNotImplemented
+
+  /* Per-group data */
+  override type LabelDataDouble      = LabelNotImplemented
+  override type LabelDataInt         = LabelNotImplemented
+  override type LabelDataBoolean     = LabelNotImplemented
+  override type LabelDataExcessCurve = LabelNotImplemented
+
+  /* Lever values the model assumes but which change change in countefactuals */
+  override type LabelLeverDouble   = LabelNotImplemented
+  override type LabelLeverInt      = LabelNotImplemented
+  override type LabelLeverBoolean  = LabelNotImplemented
+  override type LabelLeverSchedule = LabelNotImplemented
 
   override val parametersDouble = Map(
     TaxableRealizedGainsAugmentationFactor -> 1.366
@@ -64,6 +122,4 @@ object SaezZucman2020Context extends ModelContext:
 
   object Augmenter extends AverageIncomeAugmenter:
     override def apply(g : Group, model : Model) = (parametersDouble(TaxableRealizedGainsAugmentationFactor)) * g.averageIncome
-    override def requiresParametersDouble  : Set[LabelParameterDouble]  = Set(TaxableRealizedGainsAugmentationFactor)
-    override def requiresParametersInt     : Set[LabelParameterInt]     = Set.empty
-    override def requiresParametersBoolean : Set[LabelParameterBoolean] = Set.empty
+    override def requires : Set[Label] = Set(TaxableRealizedGainsAugmentationFactor)
